@@ -2,39 +2,6 @@ from typing import Callable, Dict, List, Set, Tuple
 from math import inf
 from net import Network 
 
-def aux_net(n: Network, f: Dict) -> Network:
-    na = Network(n.s, n.t)
-    last_level = [(None, n.s, 0)]
-    t_in_level = False
-
-    while True:
-        level = []
-        for _, v, _ in last_level:
-            for u, c in n.gamma_fw[v].items():
-                if u not in na.v and f[v, u] < c:
-                    level.append((v, u, c - f[v, u]))
-                    if u == n.t:
-                        t_in_level = True
-
-            for u, c in n.gamma_bw[v].items():
-                if u not in na.v and f[u, v] > 0:
-                    level.append((v, u, f[u, v]))
-                    if u == n.t:
-                        t_in_level = True
-
-        if t_in_level:
-            for v, u, c in level:
-                if u == na.t:
-                    na.add_edge(v, u, c)
-        else:
-            for v, u, c in level:
-                na.add_edge(v, u, c)
-
-        if not level or t_in_level:
-            return na
-
-        last_level = level
-
 
 def block_original(an: Network, f: Dict) -> int:
     def aug_path():
@@ -66,6 +33,7 @@ def block_original(an: Network, f: Dict) -> int:
         if not an.gamma_fw[an.s]: return aux_net_eps
 
         eps, path = aug_path()
+        print(f"\t{path}")
         aux_net_eps += eps
         for x, y in zip(path, path[1:]):
             an.gamma_fw[x][y] -= eps
@@ -105,7 +73,9 @@ def block_even(an: Network, f: Dict) -> int:
             if an.gamma_fw[x]: fwd(path)
             elif x != an.s: bwd(path) 
             else: stop = True
-        if path[-1][0] == an.t: aux_net_eps += inc(path)
+        if path[-1][0] == an.t:
+            print(f"\t{[v for v, _ in path]}")
+            aux_net_eps += inc(path)
 
     return aux_net_eps
 
@@ -127,13 +97,13 @@ def print_layered(i: int, n: Network):
 
 def dinitz_type(n: Network, block: Callable[[Network, Dict], int]) -> Tuple[int, Dict, Set]:
     v_f, f = 0, {(x, y): 0 for x in n.v for y in n.gamma_fw[x]}
-    an = aux_net(n, f)
+    an = n.aux_net(f)
     i = 1
     while n.t in an.v:
         print_layered(i, an)
-        print()
         v_f += block(an, f)
-        an = aux_net(n, f)
+        print()
+        an = n.aux_net(f)
         i += 1
     return v_f, f, an.v
 

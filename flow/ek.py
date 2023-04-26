@@ -46,7 +46,7 @@ def edmonds_karp(n: Network) -> Tuple[int, Dict, List]:
     v_f, f = 0, {(x, y): 0 for x in n.v for y in n.gamma_fw[x]}
     while True:
         eps, aug_path = shortest_aug_path(n, f)
-        if eps != 0: print(f"eps: {eps}\tpath: {aug_path}")
+        if eps != 0: print(f"eps: {eps}\tpath: {aug_path[::-1]}")
         if aug_path[0] != n.t:
             break
         v_f += eps
